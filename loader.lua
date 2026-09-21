@@ -1,62 +1,48 @@
--- Universal Game Loader
--- Template
-
 local GAMES = {
     [124216119978534] = {
         name = "rideapet",
         url = "https://raw.githubusercontent.com/Rumiiisaa/loader/main/games/rideapet.lua"
-    },
-
-    [987654321] = {
-        name = "Game 2",
-        url = "https://raw.githubusercontent.com/USERNAME/REPOSITORY/main/games/game2.lua"
-    },
+    }
 }
 
-local placeId = game.PlaceId
-local gameInfo = GAMES[placeId]
+local currentData = GAMES[game.PlaceId]
 
--- Game tidak terdaftar
-if not gameInfo then
-    warn("[Loader] Game tidak didukung.")
-    warn("[Loader] PlaceId:", placeId)
+if not currentData then
+    warn("[Loader] Game belum terdaftar. PlaceId:", game.PlaceId)
     return
 end
 
-print("[Loader] Detected:", gameInfo.name)
-print("[Loader] PlaceId:", placeId)
+print("[Loader] Menjalankan:", currentData.name)
 
--- Download script
-local success, source = pcall(function()
-    return game:HttpGet(gameInfo.url)
+-- Ambil script dengan bypass CDN cache
+local fetchOk, scriptContent = pcall(function()
+    return game:HttpGet(currentData.url .. "?t=" .. tick())
 end)
 
-if not success then
-    warn("[Loader] Failed to download script.")
-    warn(source)
+if not fetchOk or #scriptContent < 10 then
+    warn("[Loader] Gagal mengunduh file script!")
+    warn(scriptContent)
     return
 end
 
 -- Compile script
-local compileSuccess, scriptFunction = pcall(function()
-    return loadstring(source)
+local compileOk, executable = pcall(function()
+    return loadstring(scriptContent, currentData.name)
 end)
 
-if not compileSuccess or not scriptFunction then
-    warn("[Loader] Failed to compile script.")
-    warn(scriptFunction)
+if not compileOk or type(executable) ~= "function" then
+    warn("[Loader] Gagal compile kode:")
+    warn(executable)
     return
 end
 
--- Execute
-local executeSuccess, executeError = pcall(function()
-    scriptFunction()
+-- Jalankan di thread terpisah agar tidak freeze
+task.spawn(function()
+    local runOk, runErr = pcall(executable)
+    if not runOk then
+        warn("[Loader] Error runtime saat script berjalan:")
+        warn(runErr)
+    else
+        print("[Loader] Sukses dieksekusi penuh:", currentData.name)
+    end
 end)
-
-if not executeSuccess then
-    warn("[Loader] Script execution failed.")
-    warn(executeError)
-    return
-end
-
-print("[Loader] Successfully loaded:", gameInfo.name)
