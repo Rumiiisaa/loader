@@ -4,7 +4,7 @@
 local GAMES = {
     [124216119978534] = {
         name = "rideapet",
-        url = "https://raw.githubusercontent.com/Rumiiisaa/loader/games/rideapet.lua"
+        url = "https://raw.githubusercontent.com/Rumiiisaa/loader/main/games/rideapet.lua"
     },
 
     [987654321] = {
